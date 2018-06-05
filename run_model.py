@@ -13,12 +13,19 @@ from models import M1, M2
 def get_data(batch_size):
     # kwargs = {'num_workers': 1, 'pin_memory': True} if args.cuda else {}
     kwargs = {}
+    # train_loader = torch.utils.data.DataLoader(
+    #         datasets.MNIST('data/', train=True, download=True,
+    #             transform=transforms.ToTensor()),
+    #         batch_size=batch_size, shuffle=True, **kwargs)
+    # test_loader = torch.utils.data.DataLoader(
+    #         datasets.MNIST('data/', train=False, transform=transforms.ToTensor()),
+    #         batch_size=batch_size, shuffle=True, **kwargs)
     train_loader = torch.utils.data.DataLoader(
-            datasets.MNIST('data/', train=True, download=True,
+            datasets.FashionMNIST('fashiondata/', train=True, download=True,
                 transform=transforms.ToTensor()),
             batch_size=batch_size, shuffle=True, **kwargs)
     test_loader = torch.utils.data.DataLoader(
-            datasets.MNIST('data/', train=False, transform=transforms.ToTensor()),
+            datasets.FashionMNIST('fashiondata/', train=False, transform=transforms.ToTensor()),
             batch_size=batch_size, shuffle=True, **kwargs)
     return train_loader, test_loader
 
