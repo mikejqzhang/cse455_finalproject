@@ -28,9 +28,9 @@ class M1_ff(nn.Module):
         super(M1_ff, self).__init__()
 
         self.arch = network_arch
-        self.x_dim = 784
+        self.x_dim = 32*32*3
         self.h_dim = 400
-        self.z_dim = 20
+        self.z_dim = 60
 
         self.x_dropout = nn.Dropout(p=0.2)
         self.en0_layer = nn.Linear(self.x_dim, self.h_dim)
@@ -93,7 +93,7 @@ class M1_ff(nn.Module):
     def gen_samples(self, n_samples=64, filename='output/samples.png'):
         sample = torch.randn(n_samples, self.z_dim)
         sample = self.decode(sample)
-        save_image(sample.view(n_samples, 1, 28, 28), filename)
+        save_image(sample.view(n_samples, 3, 32, 32), filename)
 
 
 
@@ -122,10 +122,11 @@ class M2_ff(nn.Module):
     def __init__(self, network_arch):
         super(M2_ff, self).__init__()
 
+        self.yolo = 0
         self.arch = network_arch
-        self.x_dim = 784
+        self.x_dim = 32*32*3
         self.h_dim = 400
-        self.z_dim = 20
+        self.z_dim = 60
         self.clh_dim = 400
         self.n_labels = 10
 
@@ -199,14 +200,14 @@ class M2_ff(nn.Module):
                 'y_probs': recon_y,
                 }
         return output
-
-    def gen_samples(self, n_samples=20, filename='output/samples.png'):
+    def gen_samples(self, n_samples=20, filename='output/longhaul.png'):
+        self.yolo += 1
         all_samples = []
         sample = torch.randn(n_samples, self.z_dim)
-        for y in range(0, 8):
+        for y in range(0, 10):
             y_samples = torch.LongTensor([y for i in range(n_samples)])
             x_sample = self.decode(sample, y_samples)
             all_samples.append(x_sample)
         samples_tensor = torch.cat(all_samples, dim=-1)
-        save_image(samples_tensor.view(-1, 1, 28, 28), filename)
+        save_image(samples_tensor.view(-1, 3, 32, 32), filename, nrow=10)
 
