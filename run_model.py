@@ -37,7 +37,7 @@ for epoch in range(50):
     for i, (x, y) in enumerate(tqdm(train_loader)):
         output = m.fit(x)
         train_loss += output['loss'].item()
-    print('epoch loss:', train_loss / len(train_loader.dataset))
+    print('epoch', epoch, 'loss:', train_loss / len(train_loader.dataset))
     m.model.eval()
     m.model.gen_samples()
     m.model.train()

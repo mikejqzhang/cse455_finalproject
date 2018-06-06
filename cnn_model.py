@@ -37,10 +37,10 @@ class M1_ff(nn.Module):
         self.x_dropout = nn.Dropout(p=0.2)
         self.z_dropout = nn.Dropout(p=0.2)
 
+        # CNN layers
         self.conv_dim = 8 * 2 * 2
 
-        # TODO: figure out size of output, then use that for batch norm (for sample)
-        self.encoder = nn.Sequential(
+        self.convolve = nn.Sequential(
             nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
             nn.ReLU(True),
             nn.MaxPool2d(2, stride=2),  # b, 16, 5, 5
@@ -49,13 +49,7 @@ class M1_ff(nn.Module):
             nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
         )
 
-        self.en0_layer = nn.Linear(self.conv_dim, self.h_dim)
-        self.en_mean = nn.Linear(self.h_dim, self.z_dim)
-        self.en_lvar = nn.Linear(self.h_dim, self.z_dim)
-        self.en_mean_bn = nn.BatchNorm1d(self.z_dim, eps=0.001, momentum=0.001, affine=True)
-        self.en_lvar_bn = nn.BatchNorm1d(self.z_dim, eps=0.001, momentum=0.001, affine=True)
-
-        self.decoder = nn.Sequential(
+        self.transpose = nn.Sequential(
             nn.ConvTranspose2d(8, 16, 3, stride=2),  # b, 16, 5, 5
             nn.ReLU(True),
             nn.ConvTranspose2d(16, 8, 5, stride=3, padding=1),  # b, 8, 15, 15
@@ -64,12 +58,20 @@ class M1_ff(nn.Module):
             nn.Tanh()
         )
 
+        # Encoder layers
+        self.en0_layer = nn.Linear(self.conv_dim, self.h_dim)
+        self.en_mean = nn.Linear(self.h_dim, self.z_dim)
+        self.en_lvar = nn.Linear(self.h_dim, self.z_dim)
+        self.en_mean_bn = nn.BatchNorm1d(self.z_dim, eps=0.001, momentum=0.001, affine=True)
+        self.en_lvar_bn = nn.BatchNorm1d(self.z_dim, eps=0.001, momentum=0.001, affine=True)
+
+        # Decoder layers
         self.dez_layer = nn.Linear(self.z_dim, self.h_dim)
         self.de0_layer = nn.Linear(self.h_dim, self.x_dim)
 
     def encode(self, x):
         # Use CNN to encode
-        x = self.encoder(x)
+        x = self.convolve(x)
 
         # Map CNN to x-dim
         x = x.view(-1, self.conv_dim)
@@ -96,11 +98,12 @@ class M1_ff(nn.Module):
             return mean
 
     def decode(self, z):
+        # Decode
         dez = F.relu(self.dez_layer(z))
         de0 = F.sigmoid(self.de0_layer(dez))
 
-        # Decode convs
-        # de0 = self.decoder(de0)
+        # TODO: use transpose to ??undo?? the convolutions
+        # de0 = self.transpose(de0)
 
         return de0
 
