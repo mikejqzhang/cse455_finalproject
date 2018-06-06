@@ -31,7 +31,7 @@ m.model.train()
 # m = M2(network_arch)
 # m.model.train()
 
-m.model.gen_samples()
+# m.model.gen_samples()
 for epoch in range(50):
     train_loss = 0
     for i, (x, y) in enumerate(tqdm(train_loader)):

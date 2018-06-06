@@ -37,6 +37,8 @@ class M1_ff(nn.Module):
         self.x_dropout = nn.Dropout(p=0.2)
         self.z_dropout = nn.Dropout(p=0.2)
 
+        self.conv_dim = 8 * 2 * 2
+
         # TODO: figure out size of output, then use that for batch norm (for sample)
         self.encoder = nn.Sequential(
             nn.Conv2d(1, 16, 3, stride=3, padding=1),  # b, 16, 10, 10
@@ -47,7 +49,7 @@ class M1_ff(nn.Module):
             nn.MaxPool2d(2, stride=1)  # b, 8, 2, 2
         )
 
-        self.en0_layer = nn.Linear(self.x_dim, self.h_dim)
+        self.en0_layer = nn.Linear(self.conv_dim, self.h_dim)
         self.en_mean = nn.Linear(self.h_dim, self.z_dim)
         self.en_lvar = nn.Linear(self.h_dim, self.z_dim)
         self.en_mean_bn = nn.BatchNorm1d(self.z_dim, eps=0.001, momentum=0.001, affine=True)
@@ -66,15 +68,19 @@ class M1_ff(nn.Module):
         self.de0_layer = nn.Linear(self.h_dim, self.x_dim)
 
     def encode(self, x):
-        # Encode convs
+        # Use CNN to encode
         x = self.encoder(x)
 
-        x_do = self.x_dropout(x.view(-1, self.x_dim))
+        # Map CNN to x-dim
+        x = x.view(-1, self.conv_dim)
+
+        # Run old model
+        x_do = self.x_dropout(x)
         en0 = F.relu(self.en0_layer(x_do))
 
-        mean = self.encoder(en0)
-        lvar = self.encoder(en0)
-        mean_bn = self.en_ean_bn(mean)
+        mean = self.en_mean(en0)
+        lvar = self.en_lvar(en0)
+        mean_bn = self.en_mean_bn(mean)
         lvar_bn = self.en_lvar_bn(lvar)
 
         return mean_bn, lvar_bn
@@ -94,7 +100,7 @@ class M1_ff(nn.Module):
         de0 = F.sigmoid(self.de0_layer(dez))
 
         # Decode convs
-        de0 = self.decoder(de0)
+        # de0 = self.decoder(de0)
 
         return de0
 
